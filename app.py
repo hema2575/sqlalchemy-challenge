@@ -6,7 +6,7 @@ Created on Mon Nov 16 10:05:36 2020
 """
 
 import numpy as np
-import datetime as dt
+from datetime import datetime
 
 import sqlalchemy
 from sqlalchemy.ext.automap import automap_base
@@ -89,8 +89,8 @@ def stations():
 def tobs():
     session = Session(engine)
     lateststr = session.query(Measurement.date).order_by(Measurement.date.desc()).first()[0]
-    latestdate = dt.datetime.strptime(lateststr, '%Y-%m-%d')
-    querydate = dt.date(latestdate.year -1, latestdate.month, latestdate.day)
+    latestdate = datetime.strptime(lateststr, '%Y-%m-%d')
+    querydate = datetime(latestdate.year -1, latestdate.month, latestdate.day)
     sel = [Measurement.date,Measurement.tobs]
     queryresult = session.query(*sel).filter(Measurement.date >= querydate).all()
     session.close()
@@ -126,20 +126,20 @@ def temp_given_dt(start):
 def get_t_start_stop(start,end):
     session = Session(engine)
     queryresult = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
-        filter(Measurement.date >= start).filter(Measurement.date <= end).all()
+        filter(Measurement.date >= (datetime.strptime(start, '%Y-%m-%d'))).filter(Measurement.date <= (datetime.strptime(end, "%Y-%m-%d"))).all()
     session.close()
 
-    tobsall = []
+    tobsalll = []
     for min,avg,max in queryresult:
         tobs_dict = {}
         tobs_dict["Min"] = min
         tobs_dict["Average"] = avg
         tobs_dict["Max"] = max
-        tobsall.append(tobs_dict)
+        tobsalll.append(tobs_dict)
 
-    return jsonify(tobsall)
+    return jsonify(tobsalll)
 
 
 
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port = 5003,debug=True)
+    app.run(debug=True)
